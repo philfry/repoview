@@ -116,3 +116,8 @@ th  {
     color: blue;
     font-size: small; 
     }
+.rpmcontents {
+    display: none;
+    font-size: x-small;
+    font-family: monospace
+    }

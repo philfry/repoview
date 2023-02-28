@@ -150,6 +150,7 @@ class Repoview:
         self.pconn = None # primary.sqlite
         self.oconn = None # other.sqlite
         self.sconn = None # state db
+        self.fconn = None # filelists.sqlite
         
         self.setup_repo()
         self.setup_outdir()
@@ -293,7 +294,7 @@ class Repoview:
         xml = fromstring(repoxml) #IGNORE:E1101
         # look for primary_db, other_db, and optionally group
         
-        primary = other = comps = dbversion = None
+        primary = other = comps = filelists = dbversion = None
         
         xmlns = 'http://linux.duke.edu/metadata/repo'
         for datanode in xml.findall('{%s}data' % xmlns):
@@ -305,6 +306,8 @@ class Repoview:
                 other = os.path.join(self.opts.repodir, href)
             elif datanode.attrib['type'] == 'group':
                 comps = os.path.join(self.opts.repodir, href)
+            elif datanode.attrib['type'] == 'filelists_db':
+                filelists = os.path.join(self.opts.repodir, href)
         
         if primary is None or dbversion is None:
             self.say('Sorry, sqlite files not found in the repository.\n'
@@ -328,6 +331,11 @@ class Repoview:
         self.say('Opening changelogs database...')
         other = self.z_handler(other)
         self.oconn = sqlite.connect(other)
+        self.say('done\n')
+
+        self.say('Opening filelists database...')
+        filelists = self.z_handler(filelists)
+        self.fconn = sqlite.connect(filelists)
         self.say('done\n')
         
         if self.opts.comps:
@@ -509,9 +517,25 @@ class Repoview:
                 except ValueError:
                     pass
                 
+            filelist = []
+
+            query = ''' select dirname, filenames, filetypes from filelist
+                     where pkgKey=%d order by dirname desc''' % pkg_key
+
+            fcursor = self.fconn.cursor()
+            fcursor.execute(query)
+            frows = fcursor.fetchall()
+
+            for frow in frows:
+                fidx = 0
+                (dirname, filenames, filetypes) = frow
+                for fname in filenames.split('/'):
+                    filelist.append((filetypes[fidx], (dirname + '/' + fname)))
+                    fidx += 1
+
             pkg_data['rpms'].append((epoch, version, release, arch,
                                      time_build, size, location_href,
-                                     author, changelog, time_added))
+                                     author, changelog, time_added, filelist))
         return pkg_data
     
     

@@ -54,7 +54,7 @@ def ymd(stamp):
 
         <h3>Packages</h3>
         <table border="0" cellpadding="0" cellspacing="10">
-        <tr py:for="(e, v, r, a, built, size, loc, author, log, added) in pkg_data['rpms']">
+        <tr py:for="(e, v, r, a, built, size, loc, author, log, added, filelist) in pkg_data['rpms']">
             <td valign="top"><a href="${'../%s' % loc}" class="inpage" 
               py:content="'%s-%s-%s.%s' % (pkg_data['name'], v, r, a)"/>
               [<span style="white-space: nowrap" py:content="size"/>]</td>
@@ -65,6 +65,16 @@ def ymd(stamp):
             </td>
             <td valign="top" py:if="not log">
             	<em>(no changelog entry)</em>
+            </td>
+            <td valign="top">
+              <div onclick="this.getElementsByClassName('rpmcontents')[0].style.display='block'; return false;">
+              <strong>Package contents</strong> (click to display)
+              <div class="rpmcontents" onclick="event.stopPropagation(); this.style.display='none'; return false;">
+              <span py:for="(type, name) in filelist">
+                [${'%s' % type}] ${'%s' % name}<br />
+              </span>
+              </div>
+              </div>
             </td>
         </tr>
         </table>
