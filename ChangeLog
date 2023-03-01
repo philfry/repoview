@@ -1,3 +1,11 @@
+Version 0.7.0:
+	* rewritten for python3
+	* replace yum/rpmUtils with rpm
+	* replace xml.etree.cElementTree with xml.etree.ElementTree
+	* remove sqlite fallback
+	* use jinja2 instead of kid for templating
+	* add support for viewing the package contents
+
 Version 0.6.6:
 	* Fix for .gz and .xz compressed sqlite databases (rhbz#749028)
 	* Apply Remi Collet's patch to fix encoding (rhbz#636601)
