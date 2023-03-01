@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html>
+<head>
+  <title>RepoView: {{repo_data['title']}}</title>
+  <link rel="stylesheet" href="layout/repostyle.css" type="text/css" />
+{% if url is not none %}
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="latest-feed.xml" />
+{% endif %}
+  <meta name="robots" content="index,follow" />
+</head>
+<body>
+  <div class="levbar">
+    <p class="pagetitle">{{repo_data['name']}}</p>
+  </div>
+  <div class="main">
+    <p class="nav">Jump to letter: [
+      <span class="letterlist">
+{% for letter in repo_data['letters'] %}
+        <a class="nlink" href="{{"letter_%s.group.html"|format(letter|lower)}}">{{letter}}</a>
+{% endfor %}
+      </span>]
+    </p>
+
+    <h3>Available Groups</h3>
+    <ul class="pkglist">
+{% for name, filename, description, packages in groups %}
+      <li><a href="{{filename}}" class="inpage">{{name}}</a></li>
+{% endfor %}
+    </ul>
+
+    <h3>Latest packages:</h3>
+    <ul class="pkglist">
+{% for name, filename, version, release, built in latest %}
+      <li>
+        <em><span>{{built|ymd}}</span></em>:
+        <a href="{{filename}}" class="inpage">{{name}}-{{version}}-{{release}}</a>
+      </li>
+{% endfor %}
+    </ul>
+
+    <p class="footernote">
+      <span>Listing generated: {{time}} by Repoview-{{repo_data['my_version']}}</span>
+    </p>
+  </div>
+</body>
+</html>

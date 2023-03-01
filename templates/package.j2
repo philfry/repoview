@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html>
+<head>
+  <title>RepoView: {{repo_data['title']}}</title>
+  <link rel="stylesheet" href="layout/repostyle.css" type="text/css"/>
+  <meta name="robots" content="noindex,follow" />
+</head>
+<body>
+    <div class="levbar">
+      <p class="pagetitle">{{group_data['name']}}</p>
+      <ul class="levbarlist">
+        <li>
+        <a href="{{group_data['filename']}}" 
+          title="Back to package listing"
+          class="nlink">&laquo; Back to group</a>
+    </li>
+    </ul>
+
+    </div>
+    <div class="main">
+        <p class="nav">Jump to letter: [
+          <span class="letterlist">
+{% for letter in repo_data['letters'] %}
+            <a class="nlink" href="{{"letter_%s.group.html"|format(letter|lower)}}">{{letter}}</a>
+{% endfor %}
+          </span>]
+        </p>
+        <h2>{{pkg_data['name']}} - {{pkg_data['summary']}}</h2>
+        
+        <table border="0" cellspacing="0" cellpadding="2">
+{% if "url" in pkg_data %}
+          <tr>
+            <th>Website:</th>
+            <td><a href="{{pkg_data['url']}}">{{pkg_data['url']}}</a></td>
+          </tr>
+{% endif %}
+{% if "rpm_license" in pkg_data %}
+          <tr>
+            <th>License:</th>
+            <td>{{pkg_data['rpm_license']}}</td>
+          </tr>
+{% endif %}
+{% if "vendor" in pkg_data %}
+          <tr>
+            <th>Vendor:</th>
+            <td>{{pkg_data['vendor']}}</td>
+          </tr>
+{% endif %}
+        </table>
+
+        <dl>
+        <dt>Description:</dt>
+        <dd><pre>{{pkg_data['description']}}</dd>
+        </dl>
+
+        <h3>Packages</h3>
+        <table border="0" cellpadding="0" cellspacing="10">
+{% for e, v, r, a, built, size, loc, author, log, added, filelist in pkg_data['rpms'] %}
+        <tr>
+            <td valign="top"><a href="../{{loc}}" class="inpage">{{pkg_data['name']}}-{{v}}-{{r}}-{{a}}</a>
+            [<span style="white-space: nowrap">{{size}}</span>]</td>
+{% if log is not none %}
+            <td valign="top">
+                <strong>Changelog</strong>
+                by <span>{{author}} ({{added|ymd}})</span>:
+                <pre style="margin: 0pt 0pt 5pt 5pt">{{log}}</pre>
+            </td>
+{% else %}
+            <td valign="top">
+                <em>(no changelog entry)</em>
+            </td>
+{% endif %}
+            <td valign="top">
+              <div onclick="this.getElementsByClassName('rpmcontents')[0].style.display='block'; return false;">
+              <strong>Package contents</strong> (click to display)
+              <div class="rpmcontents" onclick="event.stopPropagation(); this.style.display='none'; return false;">
+{% for type, name in filelist %}
+              <span>
+                [{{type}}] {{name}}<br />
+              </span>
+{% endfor %}
+              </div>
+              </div>
+            </td>
+        </tr>
+{% endfor %}
+        </table>
+        <p class="footernote">
+          Listing created by Repoview-{{repo_data['my_version']}}
+        </p>
+    </div>
+</body>
+</html>

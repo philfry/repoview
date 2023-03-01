@@ -37,7 +37,7 @@ import time
 from functools import cmp_to_key
 import hashlib as md5
 from optparse import OptionParser
-from kid      import Template
+import jinja2
 from rpm import labelCompare
 from xml.etree.ElementTree import fromstring, ElementTree, TreeBuilder
 import sqlite3 as sqlite
@@ -45,17 +45,17 @@ import sqlite3 as sqlite
 ##
 # Some hardcoded constants
 #
-PKGKID    = 'package.kid'
+PKGKID    = 'package.j2'
 PKGFILE   = '%s.html'
-GRPKID    = 'group.kid'
+GRPKID    = 'group.j2'
 GRPFILE   = '%s.group.html'
-IDXKID    = 'index.kid'
+IDXKID    = 'index.j2'
 IDXFILE   = 'index.html'
-RSSKID    = 'rss.kid'
+RSSKID    = 'rss.j2'
 RSSFILE   = 'latest-feed.xml'
 ISOFORMAT = '%a, %d %b %Y %H:%M:%S %z'
 
-VERSION = '0.6.6'
+VERSION = '0.7.0'
 SUPPORTED_DB_VERSION = 10
 DEFAULT_TEMPLATEDIR = '/usr/share/repoview/templates'
 
@@ -140,15 +140,15 @@ class Repoview:
                      'my_version': VERSION
                     }
 
-        group_kid = Template(file=os.path.join(opts.templatedir, GRPKID))
-        group_kid.assume_encoding = "utf-8"
-        group_kid.repo_data = repo_data
-        self.group_kid = group_kid
+        def ymd(stamp):
+            return time.strftime('%Y-%m-%d', time.localtime(int(stamp)))
 
-        pkg_kid = Template(file=os.path.join(opts.templatedir, PKGKID))
-        pkg_kid.assume_encoding = "utf-8"
-        pkg_kid.repo_data = repo_data
-        self.pkg_kid = pkg_kid
+        self.j2loader = jinja2.FileSystemLoader(opts.templatedir)
+        self.j2env = jinja2.Environment(autoescape=True, trim_blocks=True, loader=self.j2loader)
+        self.j2env.filters['ymd'] = ymd
+
+        self.group_kid = self.j2env.get_template(GRPKID)
+        self.pkg_kid = self.j2env.get_template(PKGKID)
 
         count = 0
         for group_data in self.groups + self.letter_groups:
@@ -175,9 +175,11 @@ class Repoview:
             if self.has_changed(grp_filename, checksum):
                 # write group file
                 self.say('Writing group %s\n' % grp_filename)
-                self.group_kid.group_data = group_data
                 outfile = os.path.join(self.outdir, grp_filename)
-                self.group_kid.write(outfile, output='xhtml-strict')
+                with open(outfile, "w") as fh:
+                    fh.write(self.group_kid.render(
+                        repo_data=repo_data, group_data=group_data
+                    ))
 
         latest = self.get_latest_packages()
         repo_data['latest'] = latest
@@ -187,15 +189,14 @@ class Repoview:
         if self.has_changed('index.html', checksum):
             # Write index.html and rss feed (if asked)
             self.say('Writing index.html...')
-            idx_tpt = os.path.join(self.opts.templatedir, IDXKID)
-            idx_kid = Template(file=idx_tpt)
-            idx_kid.assume_encoding = "utf-8"
-            idx_kid.repo_data = repo_data
-            idx_kid.url = self.opts.url
-            idx_kid.latest = latest
-            idx_kid.groups = self.groups
+            idx_kid = self.j2env.get_template(IDXKID)
             outfile = os.path.join(self.outdir, 'index.html')
-            idx_kid.write(outfile, output='xhtml-strict')
+            with open(outfile, "w") as fh:
+                fh.write(idx_kid.render(
+                    repo_data=repo_data, url=self.opts.url, latest=latest,
+                    groups=self.groups,
+                    time=time.strftime('%Y-%m-%d')
+                ))
             self.say('done\n')
 
             # rss feed
@@ -553,7 +554,12 @@ class Repoview:
                 self.pkg_kid.group_data = group_data
                 self.pkg_kid.pkg_data = pkg_data
                 outfile = os.path.join(self.outdir, pkg_filename)
-                self.pkg_kid.write(outfile, output='xhtml-strict')
+                with open(outfile, "w") as fh:
+                    fh.write(self.pkg_kid.render(
+                        repo_data=repo_data,
+                        group_data=group_data,
+                        pkg_data=pkg_data
+                    ))
                 self.written[pkgname] = pkg_tuple
             else:
                 self.written[pkgname] = pkg_tuple
@@ -830,11 +836,7 @@ class Repoview:
         etb.data('Repoview-%s' % repo_data['my_version'])
         etb.end('generator')
 
-        rss_tpt = os.path.join(self.opts.templatedir, RSSKID)
-        rss_kid = Template(file=rss_tpt)
-        rss_kid.assume_encoding = "utf-8"
-        rss_kid.repo_data = repo_data
-        rss_kid.url = self.opts.url
+        rss_kid = self.j2env.get_template(RSSKID)
 
         for row in latest:
             pkg_data = self.get_package_data(row[0])
@@ -857,10 +859,12 @@ class Repoview:
             etb.start('title', {})
             etb.data('Update: %s-%s-%s' % (pkg_data['name'], version, release))
             etb.end('title')
-            rss_kid.pkg_data = pkg_data
-            description = rss_kid.serialize()
             etb.start('description', {})
-            etb.data(description.decode('utf-8'))
+            etb.data(rss_kid.render(
+                repo_data=repo_data,
+                url=self.opts.url,
+                pkg_data=pkg_data,
+            ))
             etb.end('description')
             etb.end('item')
 
