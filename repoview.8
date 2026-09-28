@@ -1,4 +1,4 @@
-.TH "repoview" "8" "0.6.6" "Konstantin Ryabitsev" "Applications/Utilities"
+.TH "repoview" "8" "0.7.1.1" "Konstantin Ryabitsev" "Applications/Utilities"
 
 .SH NAME
 \fBrepoview\fR \- Make YUM repositories browseable
@@ -9,7 +9,7 @@
 .SH DESCRIPTION
 RepoView allows one to easily create a set of static HTML pages in a 
 YUM repository, allowing simple browsing of available packages. It uses 
-kid templating engine to create the pages and is therefore easily 
+jinja2 templating engine to create the pages and is therefore easily 
 customizeable.
 
 .SH OPTIONS
@@ -29,9 +29,9 @@ Optionally exclude this arch. E.g.:
 \-x src \-x ia64
 .TP
 .B \-k, \-\-template\-dir DIR
-Use an alternative directory with kid templates instead of the 
+Use an alternative directory with jinja2 templates instead of the 
 default: ./templates. The template directory must contain four 
-required template files: index.kid, group.kid, package.kid, rss.kid and 
+required template files: index.j2, group.j2, package.j2, rss.j2 and 
 the "layout" dir which will be copied into the repoview directory.
 .TP
 .B \-o, \-\-output\-dir DIR

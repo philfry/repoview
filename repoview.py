@@ -55,7 +55,7 @@ RSSKID    = 'rss.j2'
 RSSFILE   = 'latest-feed.xml'
 ISOFORMAT = '%a, %d %b %Y %H:%M:%S %z'
 
-VERSION = '0.7.1'
+VERSION = '0.7.1.1'
 SUPPORTED_DB_VERSION = 10
 DEFAULT_TEMPLATEDIR = '/usr/share/repoview/templates'
 
@@ -928,9 +928,9 @@ def main():
     tpl_opts = parser.add_argument_group("template specific options")
     tpl_opts.add_argument('-k', '--template-dir', dest='templatedir',
         default=DEFAULT_TEMPLATEDIR,
-        help='Use an alternative directory with kid templates instead of '
+        help='Use an alternative directory with jinja2 templates instead of '
         'the default: %(default)s. The template directory must contain four '
-        'required template files: index.kid, group.kid, package.kid, rss.kid '
+        'required template files: index.j2, group.j2, package.j2, rss.j2 '
         'and the "layout" dir which will be copied into the repoview directory')
     tpl_opts.add_argument('-o', '--output-dir', dest='outdir',
         default='repoview',
